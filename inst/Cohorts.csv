@@ -1,0 +1,11 @@
+cohortId,webApiId,cohortName
+5861,5861,dGEM_outcome_death
+5859,5859,dGEM_target_covid_hospitalization
+5863,5863,dGEM_variable_COPD
+5864,5864,dGEM_variable_cancer
+5865,5865,dGEM_variable_diabetes
+5866,5866,dGEM_variable_heart_disease
+5867,5867,dGEM_variable_hyperlipidemia
+5868,5868,dGEM_variable_hypertension
+5869,5869,dGEM_variable_kidney_disease
+5870,5870,dGEM_variable_obesity

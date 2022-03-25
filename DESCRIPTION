@@ -1,0 +1,30 @@
+Package: dGEMcovid
+Type: Package
+Title: A Skeleton for running distributed model studies
+Version: 0.0.1
+Author: Jenna Reps [aut, cre]
+Maintainer: Jenna M Reps <reps@ohdsi.org>
+Description: A skeleton package to be used as a starting point when implementing distributed model studies.
+Depends:
+    R(>= 3.6.0)
+Imports:
+    CohortGenerator,
+    DatabaseConnector,
+    jsonlite,
+    PatientLevelPrediction (>= 5.0.2),
+    ParallelLogger,
+    pda,
+    SqlRender,
+    utils
+Suggests:
+    devtools,
+    knitr,
+    rmarkdown,
+    R.utils
+Remotes:
+    ohdsi/PatientLevelPrediction
+    ohdsi/CohortGenerator
+License: Apache License 2.0
+VignetteBuilder: knitr
+LazyData: TRUE
+RoxygenNote: 7.1.1
