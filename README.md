@@ -6,7 +6,7 @@ dGEM (Decentralized Algorithm for Generalized Linear Mixed Model)
 - Analytics use case(s): **Patient-Level Prediction**
 - Study type: **Clinical Application**
 - Tags: **COVID-19**
-- Study lead: **add name**
+- Study lead: **Jiayi Tong**, **Yong Chen**, **Jenna Reps**
 - Study lead forums tag: **[add_username](https://forums.ohdsi.org/u/add_username)**
 - Study start date: **month year**
 - Study end date: **month year**
