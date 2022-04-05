@@ -1905,10 +1905,10 @@
     ],
     "outcomeId": 5861,
     "control": {
-      "model": "ODAL",
+      "model": "dGEM",
       "family": "binomial",
       "optim_maxit": 100,
-      "heterogeneity": false
+      "heterogeneity": true
     }
   },
   "packageName": "dGEMcovid",
