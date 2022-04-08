@@ -1566,9 +1566,9 @@
   "studySettings": {
     "dataCovariateSettings": {
       "numberOfVisits": true,
-      "dateStart": "20200101",
-      "dateEnd": "20220325",
-      "visitTypeCount": true
+      "startDate": "20190101",
+      "endDate": "20191231",
+      "visitTypeCount": false
     },
     "populationSettings": {
       "minTimeAtRisk": 364,
@@ -1624,17 +1624,15 @@
     "covariateSettings": [
       {
         "shortTermStartDays": -30,
-        "VisitCountLongTerm": true,
         "DemographicsGender": true,
         "includedCovariateIds": [],
         "addDescendantsToInclude": false,
         "DemographicsRace": true,
         "mediumTermStartDays": -180,
-        "VisitConceptCountLongTerm": true,
         "excludedCovariateConceptIds": [],
         "CharlsonIndex": true,
         "longTermStartDays": -365,
-        "DemographicsAgeGroup": true,
+        "DemographicsAge": true,
         "includedCovariateConceptIds": [],
         "attributes": {
           "names": [
