@@ -42,7 +42,11 @@
 #'                                         \item{WARN}{Show warning messages}
 #'                                         \item{ERROR}{Show error messages}
 #'                                         \item{FATAL}{Be silent except for fatal errors}
-#'                                         }                              
+#'                                         }  
+#'  @param alphaStart     The start date for the alpha wave in the data in ddmmyyyy format    
+#'  @param alphaEnd     The end date for the alpha wave in the data in ddmmyyyy format  
+#'  @param deltaStart     The start date for the delta wave in the data in ddmmyyyy format  
+#'  @param deltaEnd     The end date for the detla wave in the data in ddmmyyyy format                                                                 
 #'
 #' @examples
 #' \dontrun{
@@ -67,21 +71,34 @@
 #' }
 #'
 #' @export
-execute <- function(databaseDetails,
-                    siteId = 'site_name',
-                    outputFolder,
-                    createCohorts = F,
-                    createData = F,
-                    sampleSize = NULL,
-                    createControl = F,
-                    siteIds = '', # only needed if lead site
-                    leadSiteNextStep = F,
-                    runInitialize = F,
-                    runDerive = F,
-                    runEstimate = F,
-                    runSynthesize = F,
-                    verbosity = "INFO"
-                    ) {
+execute <- function(
+  databaseDetails,
+  siteId = 'site_name',
+  outputFolder,
+  createCohorts = F,
+  createData = F,
+  sampleSize = NULL,
+  createControl = F,
+  siteIds = '', # only needed if lead site
+  leadSiteNextStep = F,
+  runInitialize = F,
+  runDerive = F,
+  runEstimate = F,
+  runSynthesize = F,
+  verbosity = "INFO",
+  alphaStart = '01112020',
+  alphaEnd = '01022021',
+  deltaStart = '01082021',
+  deltaEnd = '01102021'
+) {
+  
+  
+  dates <- list(
+    alpha = list(startDate = alphaStart, endDate = alphaEnd),
+    delta = list(startDate = deltaStart, endDate = deltaEnd)
+  )
+  
+  waves <- c('alpha','delta')
   
   if (!file.exists(outputFolder)){
     dir.create(outputFolder, recursive = TRUE)
@@ -123,180 +140,216 @@ execute <- function(databaseDetails,
   } 
   
   if(createData){
-    ParallelLogger::logInfo("Creating labelled dataset")
-
-    databaseDetails$cohortId <- analysisList$studySettings$targetId
-    databaseDetails$outcomeIds <- analysisList$studySettings$outcomeId
     
-    plpData <- PatientLevelPrediction::getPlpData(
-      databaseDetails = databaseDetails, 
-      covariateSettings = analysisList$studySettings$covariateSettings, 
-      restrictPlpDataSettings = analysisList$studySettings$restrictPlpDataSettings
+    # save the settings
+    
+    timeSettings <- data.frame(
+      wave = names(dates),
+      starts = unlist(lapply(waves, function(x) x$startDate)),
+      ends = unlist(lapply(waves, function(x) x$endDate))
+    )
+    write.csv(timeSettings, file.path(outputFolder, 'timeSettings.csv'), row.names = F)
+    
+    for(wave in waves){
+      
+      if(!dir.exists(file.path(outputFolder, wave))){
+        dir.create(file.path(outputFolder, wave), recursive = T)
+      }
+      # restrict to the input date:
+      ParallelLogger::logInfo(paste0(wave, " date: ",dates[[wave]]$startDate, "-", dates[[wave]]$endDate ))
+      analysisList$studySettings$restrictPlpDataSettings$studyStartDate <- dates[[wave]]$startDate
+      analysisList$studySettings$restrictPlpDataSettings$studyEndDate <- dates[[wave]]$endDate
+      
+      
+      ParallelLogger::logInfo("Creating labelled dataset")
+      
+      databaseDetails$cohortId <- analysisList$studySettings$targetId
+      databaseDetails$outcomeIds <- analysisList$studySettings$outcomeId
+      
+      plpData <- PatientLevelPrediction::getPlpData(
+        databaseDetails = databaseDetails, 
+        covariateSettings = analysisList$studySettings$covariateSettings, 
+        restrictPlpDataSettings = analysisList$studySettings$restrictPlpDataSettings
       )
-
-    labels <- PatientLevelPrediction::createStudyPopulation(
-      plpData = plpData, 
-      outcomeId = analysisList$studySettings$outcomeId, 
-      populationSettings = analysisList$studySettings$populationSettings
-    )
-    
-    # convert to matrix
-    
-    dataObject <- PatientLevelPrediction::toSparseM(
-      plpData = plpData, 
-      cohort = labels
-    )
-    
-    #sparse matrix: dataObject$dataMatrix
-    #labels: dataObject$labels
-    
-    columnDetails <- as.data.frame(dataObject$covariateRef)
-    
-    cnames <- columnDetails$covariateName[order(columnDetails$columnId)]
-    
-    ipMat <- as.matrix(dataObject$dataMatrix)
-    ipdata <- as.data.frame(ipMat)
-    colnames(ipdata) <-  makeFriendlyNames(cnames)
-    ipdata$outcome <- dataObject$labels$outcomeCount
-    
-    # modify the covariates
-    # Charlson comorbidity categories: 0-1, 2-4, and 5
-    if('Charlson_index___Romano_adaptation' %in% colnames(ipdata)){
-      ParallelLogger::logInfo('Processing Charlson index into categories')
+      
+      labels <- PatientLevelPrediction::createStudyPopulation(
+        plpData = plpData, 
+        outcomeId = analysisList$studySettings$outcomeId, 
+        populationSettings = analysisList$studySettings$populationSettings
+      )
+      
+      # convert to matrix
+      
+      dataObject <- PatientLevelPrediction::toSparseM(
+        plpData = plpData, 
+        cohort = labels
+      )
+      
+      #sparse matrix: dataObject$dataMatrix
+      #labels: dataObject$labels
+      
+      columnDetails <- as.data.frame(dataObject$covariateRef)
+      
+      cnames <- columnDetails$covariateName[order(columnDetails$columnId)]
+      
+      ipMat <- as.matrix(dataObject$dataMatrix)
+      ipdata <- as.data.frame(ipMat)
+      colnames(ipdata) <-  makeFriendlyNames(cnames)
+      ipdata$outcome <- dataObject$labels$outcomeCount
+      
+      # modify the covariates
       # Charlson comorbidity categories: 0-1, 2-4, and 5
-      ipdata$Charlson_index___Romano_adaptation0_1 <- rep(0, nrow(ipdata))
-      ipdata$Charlson_index___Romano_adaptation0_1[ipdata$Charlson_index___Romano_adaptation <= 1] <- 1
+      if('Charlson_index___Romano_adaptation' %in% colnames(ipdata)){
+        ParallelLogger::logInfo('Processing Charlson index into categories')
+        # Charlson comorbidity categories: 0-1, 2-4, and 5
+        ipdata$Charlson_index___Romano_adaptation0_1 <- rep(0, nrow(ipdata))
+        ipdata$Charlson_index___Romano_adaptation0_1[ipdata$Charlson_index___Romano_adaptation <= 1] <- 1
+        
+        ipdata$Charlson_index___Romano_adaptation2_4 <- rep(0, nrow(ipdata))
+        ipdata$Charlson_index___Romano_adaptation2_4[ipdata$Charlson_index___Romano_adaptation <= 4 & ipdata$Charlson_index___Romano_adaptation >=2] <- 1
+        
+        ipdata$Charlson_index___Romano_adaptation5p <- rep(0, nrow(ipdata))
+        ipdata$Charlson_index___Romano_adaptation5p[ipdata$Charlson_index___Romano_adaptation >= 5] <- 1
+        
+        ipdata <- ipdata[!colnames(ipdata) == 'Charlson_index___Romano_adaptation']
+      }
       
-      ipdata$Charlson_index___Romano_adaptation2_4 <- rep(0, nrow(ipdata))
-      ipdata$Charlson_index___Romano_adaptation2_4[ipdata$Charlson_index___Romano_adaptation <= 4 & ipdata$Charlson_index___Romano_adaptation >=2] <- 1
+      # Age categories: 18-65, 65-80, and 80
+      if('age_in_years' %in% colnames(ipdata)){
+        ParallelLogger::logInfo('Processing age into categories')
+        
+        ipdata$age18_64 <- rep(0, nrow(ipdata))
+        ipdata$age18_64[ipdata$age_in_years >= 0 & ipdata$age_in_years <= 64] <- 1
+        
+        ipdata$age65_80 <- rep(0, nrow(ipdata))
+        ipdata$age65_80[ipdata$age_in_years >= 65 & ipdata$age_in_years <= 79] <- 1
+        
+        ipdata$age80p <- rep(0, nrow(ipdata))
+        ipdata$age80p[ipdata$age_in_years >= 80] <- 1
+        
+        ipdata <- ipdata[,colnames(ipdata) != 'age_in_years']
+      }
       
-      ipdata$Charlson_index___Romano_adaptation5p <- rep(0, nrow(ipdata))
-      ipdata$Charlson_index___Romano_adaptation5p[ipdata$Charlson_index___Romano_adaptation >= 5] <- 1
+      # save the data:
+      utils::write.csv(
+        x = ipdata, 
+        file = file.path(outputFolder,wave,'data.csv'), 
+        row.names = F
+      )
       
-      ipdata <- ipdata[!colnames(ipdata) == 'Charlson_index___Romano_adaptation']
-    }
-    
-    # Age categories: 18-65, 65-80, and 80
-    if('age_in_years' %in% colnames(ipdata)){
-      ParallelLogger::logInfo('Processing age into categories')
+      # add the data covariates
       
-      ipdata$age18_64 <- rep(0, nrow(ipdata))
-      ipdata$age18_64[ipdata$age_in_years >= 0 & ipdata$age_in_years <= 64] <- 1
-      
-      ipdata$age65_80 <- rep(0, nrow(ipdata))
-      ipdata$age65_80[ipdata$age_in_years >= 65 & ipdata$age_in_years <= 79] <- 1
-      
-      ipdata$age80p <- rep(0, nrow(ipdata))
-      ipdata$age80p[ipdata$age_in_years >= 80] <- 1
-      
-      ipdata <- ipdata[,colnames(ipdata) != 'age_in_years']
-    }
-    
-    # save the data:
-    utils::write.csv(
-      x = ipdata, 
-      file = file.path(outputFolder, 'data.csv'), 
-      row.names = F
-    )
-    
-    # add the data covariates
-    
-    if(!is.null(analysisList$studySettings$dataCovariateSettings)){
-    dataSummary <- do.call(
-      dataSummary, 
-      list(
-        dataCovariateSettings = analysisList$studySettings$dataCovariateSettings,
-        databaseDetails = databaseDetails
+      if(!is.null(analysisList$studySettings$dataCovariateSettings)){
+        dataSummary <- do.call(
+          dataSummary, 
+          list(
+            dataCovariateSettings = analysisList$studySettings$dataCovariateSettings,
+            databaseDetails = databaseDetails
+          )
         )
-    )
-    
-    utils::write.csv(
-      x = dataSummary, 
-      file = file.path(outputFolder, 'dataSummary.csv'), 
-      row.names = F
-    )
-    
-    }
+        
+        utils::write.csv(
+          x = dataSummary, 
+          file = file.path(outputFolder,wave, 'dataSummary.csv'), 
+          row.names = F
+        )
+        
+      }
+      
+    } # end wave
     
   }
   
-  # Step 1: lead site creates the control
+  # Step 1: lead site creates the controls
   if(createControl){
     
-    ParallelLogger::logInfo('Creating the control settings')
-    
-    #check the data exist to get the names
-    if(file.exists(file.path(outputFolder, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, 'dataSummary.csv'))
-    } else{
-      dataSummary <- NULL
-    }
-    
-    #check the data exist to get the names
-    if(file.exists(file.path(outputFolder, 'data.csv'))){
-      data <- utils::read.csv(file.path(outputFolder, 'data.csv'))
-    } else{
-      stop('Please generate data before creating control')
-    }
-    
-    control <- list(
-      project_name = analysisList$packageName,
-      step = 'initialize',
-      sites = siteIds,
-      heterogeneity = analysisList$studySettings$control$heterogeneity,
-      model = analysisList$studySettings$control$model,
-      family = analysisList$studySettings$control$family,
-      outcome = "outcome",
-      variables = colnames(data)[colnames(data)!='outcome'],
-      variables_site_level = names(dataSummary),
-      optim_maxit = analysisList$studySettings$control$optim_maxit,
-      lead_site = siteId,
-      upload_date = as.character(Sys.time()) 
-    )
-    
-    control <- jsonlite::toJSON(
-      x = control, 
-      pretty = T, 
-      digits = 23, 
-      auto_unbox=TRUE, 
-      null = "null"
-    )
-    
-    write(control, file.path(outputFolder, 'control.json'))
-    
-    ParallelLogger::logInfo(
-      paste0(
-        'Initial control create at: ',
-        file.path(outputFolder, 'control.json'),
-        ' please upload this to ', website
-        
+    for(wave in waves){
+      ParallelLogger::logInfo(paste0('Creating the control settings for wave ', wave))
+      
+      #check the data exist to get the names
+      if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+        dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
+      } else{
+        dataSummary <- NULL
+      }
+      
+      #check the data exist to get the names
+      if(file.exists(file.path(outputFolder, wave, 'data.csv'))){
+        data <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
+      } else{
+        stop('Please generate data before creating control')
+      }
+      
+      control <- list(
+        project_name = paste(analysisList$packageName, wave, sep = '_'),
+        step = 'initialize',
+        sites = siteIds,
+        heterogeneity = analysisList$studySettings$control$heterogeneity,
+        model = analysisList$studySettings$control$model,
+        family = analysisList$studySettings$control$family,
+        outcome = "outcome",
+        variables = colnames(data)[colnames(data)!='outcome'],
+        variables_site_level = names(dataSummary),
+        optim_maxit = analysisList$studySettings$control$optim_maxit,
+        lead_site = siteId,
+        upload_date = as.character(Sys.time()) 
+      )
+      
+      control <- jsonlite::toJSON(
+        x = control, 
+        pretty = T, 
+        digits = 23, 
+        auto_unbox=TRUE, 
+        null = "null"
+      )
+      
+      write(control, file.path(outputFolder, wave, 'control.json'))
+      
+      ParallelLogger::logInfo(
+        paste0(
+          'Initial control created at: ',
+          file.path(outputFolder, wave, 'control.json'),
+          ' please upload this to ', website
+          
         )
       )
-
+      
+    }
+    
   }
   
   if(runInitialize | runDerive | runEstimate | runSynthesize){
     # json control file
-    jsonFileLocation <- file.path(outputFolder, 'control.json')
+    jsonFileLocation <- list(
+      alpha = file.path(outputFolder,'alpha', 'control.json'),
+      delta = file.path(outputFolder,'delta', 'control.json')
+      )
     
   }
 
   
   if(runInitialize){
     
+    for(wave in waves){
+    
     control <- tryCatch(
-      {readChar(jsonFileLocation, file.info(jsonFileLocation)$size)},
+      {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
       error= function(cond) {
         ParallelLogger::logInfo('Issue with loading json file...');
         ParallelLogger::logError(cond)
       })
     control <- jsonlite::fromJSON(control)
     
-    ipdata <- utils::read.csv(file.path(outputFolder, 'data.csv'))
+    # check control name 
+    if(length(grep(wave, control$project_name))==0){
+      ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+    }
+    
+    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
     
     # get summary variables
-    if(file.exists(file.path(outputFolder, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, 'dataSummary.csv'))
+    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
     } else{
       dataSummary <- NULL
     }
@@ -310,33 +363,44 @@ execute <- function(databaseDetails,
         ipdata = ipdata, 
         hosdata = dataSummary,
         site_id = siteId, 
-        dir = outputFolder
+        dir = file.path(outputFolder, wave)
       )
       
-      ParallelLogger::logInfo(paste0('result json ready to check in ', outputFolder))
+      ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
       ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
       
     } # control exists
     } else{
       ParallelLogger::logInfo('Control is not for initialize - please check control stage')
     }
+    
+    
+  } # end wave
+    
   }
   
   if(runDerive){
     
-    control <- tryCatch(
-      {readChar(jsonFileLocation, file.info(jsonFileLocation)$size)},
-      error= function(cond) {
-        ParallelLogger::logInfo('Issue with loading json file...');
-        ParallelLogger::logError(cond)
-      })
-    control <- jsonlite::fromJSON(control)
-    
-    ipdata <- utils::read.csv(file.path(outputFolder, 'data.csv'))
+    for(wave in waves){
+      
+      control <- tryCatch(
+        {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
+        error= function(cond) {
+          ParallelLogger::logInfo('Issue with loading json file...');
+          ParallelLogger::logError(cond)
+        })
+      control <- jsonlite::fromJSON(control)
+      
+      # check control name 
+      if(length(grep(wave, control$project_name))==0){
+        ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+      }
+      
+    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
     
     # get summary variables
-    if(file.exists(file.path(outputFolder, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, 'dataSummary.csv'))
+    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
     } else{
       dataSummary <- NULL
     }
@@ -349,33 +413,43 @@ execute <- function(databaseDetails,
           ipdata = ipdata, 
           hosdata = dataSummary,
           site_id = siteId, 
-          dir = outputFolder
+          dir = file.path(outputFolder, wave)
         )
         
-        ParallelLogger::logInfo(paste0('result json ready to check in ', outputFolder))
+        ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
         ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
         
       } # control exists
     } else{
       ParallelLogger::logInfo('Control is not for derive - please check control stage')
     }
+    
+  } # end wave
+    
   }
   
   if(runEstimate){
     
-    control <- tryCatch(
-      {readChar(jsonFileLocation, file.info(jsonFileLocation)$size)},
-      error= function(cond) {
-        ParallelLogger::logInfo('Issue with loading json file...');
-        ParallelLogger::logError(cond)
-      })
-    control <- jsonlite::fromJSON(control)
+    for(wave in waves){
+      
+      control <- tryCatch(
+        {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
+        error= function(cond) {
+          ParallelLogger::logInfo('Issue with loading json file...');
+          ParallelLogger::logError(cond)
+        })
+      control <- jsonlite::fromJSON(control)
+      
+      # check control name 
+      if(length(grep(wave, control$project_name))==0){
+        ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+      }
     
-    ipdata <- utils::read.csv(file.path(outputFolder, 'data.csv'))
+    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
     
     # get summary variables
-    if(file.exists(file.path(outputFolder, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, 'dataSummary.csv'))
+    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
     } else{
       dataSummary <- NULL
     }
@@ -388,16 +462,19 @@ execute <- function(databaseDetails,
           ipdata = ipdata, 
           hosdata = dataSummary,
           site_id = siteId, 
-          dir = outputFolder
+          dir = file.path(outputFolder, wave)
         )
         
-        ParallelLogger::logInfo(paste0('result json ready to check in ', outputFolder))
+        ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
         ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
         
       } # control exists
     } else{
       ParallelLogger::logInfo('Control is not for estimate - please check control stage')
     }
+    
+  } # end wave
+  
   }
   
   if(runSynthesize){
