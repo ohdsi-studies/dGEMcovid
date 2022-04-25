@@ -24,6 +24,7 @@ Suggests:
 Remotes:
     ohdsi/PatientLevelPrediction
     ohdsi/CohortGenerator
+    Penncil/pda
 License: Apache License 2.0
 VignetteBuilder: knitr
 LazyData: TRUE

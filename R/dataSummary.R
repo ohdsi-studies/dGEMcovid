@@ -69,3 +69,45 @@ dataSummary <- function(
   return(resultSummary)
   
 }
+
+
+
+
+generateDatePlot <- function(
+  databaseDetails,
+  outputFolder
+){
+  
+  conn <- DatabaseConnector::connect(connectionDetails = databaseDetails$connectionDetails)
+  on.exit(DatabaseConnector::disconnect(conn))
+
+  sql <- "select cohort_start_date from @cohortSchema.@cohortTable 
+        where cohort_definition_id = @cohortId;"
+  
+  sql <- SqlRender::render(
+    sql = sql, 
+    cohortSchema = databaseDetails$cohortDatabaseSchema,
+    cohortTable = databaseDetails$cohortTable,
+    cohortId = 5859
+  )
+  
+  sql <- SqlRender::translate(
+    sql = sql, 
+    targetDialect = databaseDetails$connectionDetails$dbms, 
+    tempEmulationSchema = databaseDetails$tempEmulationSchema
+  )
+  
+  res <- DatabaseConnector::querySql(conn, sql)
+
+  plotDate <- ggplot2::ggplot(
+    data = res %>% dplyr::group_by(.data$COHORT_START_DATE) %>% dplyr::summarise(N = n()), 
+    ggplot2::aes(x = COHORT_START_DATE, y = N, group = 1)) +
+    ggplot2::geom_line()+
+    ggplot2::geom_point() +
+    ggplot2::theme(strip.text.y.right = ggplot2::element_text(angle = 0))
+
+  
+  ggplot2::ggsave(file.path(outputFolder, "countPerDate.pdf"))
+  
+  return(invisible(plotDate))
+}

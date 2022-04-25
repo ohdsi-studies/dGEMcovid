@@ -114,6 +114,12 @@ execute <- function(databaseDetails,
       databaseDetails = databaseDetails,
       outputFolder = outputFolder
     )
+    
+    ParallelLogger::logInfo('Generating date plot')
+    generateDatePlot(
+      databaseDetails = databaseDetails,
+      outputFolder = outputFolder
+      )
   } 
   
   if(createData){
