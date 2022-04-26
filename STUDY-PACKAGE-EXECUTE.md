@@ -9,7 +9,7 @@ Instructions To Run Study
 ## Step 1a - Register (skip this if you already have an account)
 - register an account at https://pda-ota.pdamethods.org/
 
-## Step 1b - Sign Up for the Alpha wave and Delta wave studyies
+## Step 1b - Sign Up for the Alpha wave and Delta wave studies
 - Create a director where you want to save the results to.  We will refer to this directory as `outputFolder`.  Create two folders in the `outputFolder` called `alpha` and `delta`. 
 
 - There are two studies investigating the alpha wave and the delta wave. Get the `project name` and `inviation code` per wave from the study lead.  This will then enable you to download the control jsons for the studies. 
