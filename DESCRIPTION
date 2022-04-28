@@ -10,10 +10,12 @@ Depends:
 Imports:
     CohortGenerator,
     DatabaseConnector,
+    dplyr,
     jsonlite,
     PatientLevelPrediction (>= 5.0.2),
     ParallelLogger,
     pda,
+    rlang,
     SqlRender,
     utils
 Suggests:

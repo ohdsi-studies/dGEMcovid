@@ -43,10 +43,10 @@
 #'                                         \item{ERROR}{Show error messages}
 #'                                         \item{FATAL}{Be silent except for fatal errors}
 #'                                         }  
-#'  @param alphaStart     The start date for the alpha wave in the data in ddmmyyyy format    
-#'  @param alphaEnd     The end date for the alpha wave in the data in ddmmyyyy format  
-#'  @param deltaStart     The start date for the delta wave in the data in ddmmyyyy format  
-#'  @param deltaEnd     The end date for the detla wave in the data in ddmmyyyy format                                                                 
+#'  @param alphaStart     The start date for the alpha wave in the data in "yyyymmdd" format    
+#'  @param alphaEnd     The end date for the alpha wave in the data in "yyyymmdd" format  
+#'  @param deltaStart     The start date for the delta wave in the data in "yyyymmdd" format  
+#'  @param deltaEnd     The end date for the detla wave in the data in "yyyymmdd" format                                                                 
 #'
 #' @examples
 #' \dontrun{
@@ -86,10 +86,10 @@ execute <- function(
   runEstimate = F,
   runSynthesize = F,
   verbosity = "INFO",
-  alphaStart = '01112020',
-  alphaEnd = '01022021',
-  deltaStart = '01082021',
-  deltaEnd = '01102021'
+  alphaStart = '20201101',
+  alphaEnd = '20210201',
+  deltaStart = '20210701',
+  deltaEnd = '20211001'
 ) {
   
   
@@ -145,8 +145,8 @@ execute <- function(
     
     timeSettings <- data.frame(
       wave = names(dates),
-      starts = unlist(lapply(waves, function(x) x$startDate)),
-      ends = unlist(lapply(waves, function(x) x$endDate))
+      starts = unlist(lapply(dates, function(x) x$startDate)),
+      ends = unlist(lapply(dates, function(x) x$endDate))
     )
     write.csv(timeSettings, file.path(outputFolder, 'timeSettings.csv'), row.names = F)
     
@@ -166,12 +166,17 @@ execute <- function(
       databaseDetails$cohortId <- analysisList$studySettings$targetId
       databaseDetails$outcomeIds <- analysisList$studySettings$outcomeId
       
-      plpData <- PatientLevelPrediction::getPlpData(
+      plpData <- tryCatch(
+        {
+        PatientLevelPrediction::getPlpData(
         databaseDetails = databaseDetails, 
         covariateSettings = analysisList$studySettings$covariateSettings, 
         restrictPlpDataSettings = analysisList$studySettings$restrictPlpDataSettings
+        )}, 
+        error = function(e){ParallelLogger::logInfo(e); return(NULL)}
       )
       
+      if(!is.null(plpData)){
       labels <- PatientLevelPrediction::createStudyPopulation(
         plpData = plpData, 
         outcomeId = analysisList$studySettings$outcomeId, 
@@ -241,7 +246,7 @@ execute <- function(
       
       if(!is.null(analysisList$studySettings$dataCovariateSettings)){
         dataSummary <- do.call(
-          dataSummary, 
+          'dataSummary', 
           list(
             dataCovariateSettings = analysisList$studySettings$dataCovariateSettings,
             databaseDetails = databaseDetails
@@ -254,7 +259,9 @@ execute <- function(
           row.names = F
         )
         
-      }
+      } 
+        
+      } # end if not null
       
     } # end wave
     
@@ -336,43 +343,51 @@ execute <- function(
       {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
       error= function(cond) {
         ParallelLogger::logInfo('Issue with loading json file...');
-        ParallelLogger::logError(cond)
+        ParallelLogger::logError(cond);
+        return(NULL)
       })
-    control <- jsonlite::fromJSON(control)
-    
-    # check control name 
-    if(length(grep(wave, control$project_name))==0){
-      ParallelLogger::logWarn('Control project_name suggests incorrect wave')
-    }
-    
-    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
-    
-    # get summary variables
-    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
-    } else{
-      dataSummary <- NULL
-    }
-    
     
     if(!is.null(control)){
-      if(control$step == 'initialize'){
-    
-    ParallelLogger::logInfo(paste0('At step ', control$step))
-      pda::pda(
-        ipdata = ipdata, 
-        hosdata = dataSummary,
-        site_id = siteId, 
-        dir = file.path(outputFolder, wave)
-      )
       
-      ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
-      ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
+      control <- jsonlite::fromJSON(control)
       
-    } # control exists
-    } else{
-      ParallelLogger::logInfo('Control is not for initialize - please check control stage')
-    }
+      # check control name 
+      if(length(grep(wave, control$project_name))==0){
+        ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+      }
+      
+      ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
+      
+      # get summary variables
+      if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+        dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
+      } else{
+        dataSummary <- NULL
+      }
+      
+      
+      if(!is.null(control)){
+        if(control$step == 'initialize'){
+          
+          ParallelLogger::logInfo(paste0('At step ', control$step))
+          pda::pda(
+            ipdata = ipdata, 
+            hosdata = dataSummary,
+            site_id = siteId, 
+            dir = file.path(outputFolder, wave)
+          )
+          
+          ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
+          ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
+          
+        } # control exists
+      } else{
+        ParallelLogger::logInfo('Control is not for initialize - please check control stage')
+      }
+      
+    } else {
+      ParallelLogger::logInfo(paste0('No control for wave ', wave))
+      }
     
     
   } # end wave
@@ -387,44 +402,53 @@ execute <- function(
         {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
         error= function(cond) {
           ParallelLogger::logInfo('Issue with loading json file...');
-          ParallelLogger::logError(cond)
+          ParallelLogger::logError(cond);
+          return(NULL)
         })
-      control <- jsonlite::fromJSON(control)
       
-      # check control name 
-      if(length(grep(wave, control$project_name))==0){
-        ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+      
+      if(!is.null(control)){
+        
+        control <- jsonlite::fromJSON(control)
+        
+        # check control name 
+        if(length(grep(wave, control$project_name))==0){
+          ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+        }
+        
+        ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
+        
+        # get summary variables
+        if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+          dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
+        } else{
+          dataSummary <- NULL
+        }
+        
+        if(!is.null(control)){
+          if(control$step == 'derive'){
+            
+            ParallelLogger::logInfo(paste0('At step ', control$step))
+            pda::pda(
+              ipdata = ipdata, 
+              hosdata = dataSummary,
+              site_id = siteId, 
+              dir = file.path(outputFolder, wave)
+            )
+            
+            ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
+            ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
+            
+          } # control exists
+        } else{
+          ParallelLogger::logInfo('Control is not for derive - please check control stage')
+        }
+        
+      } else {
+        ParallelLogger::logInfo(paste0('No control for wave ', wave))
       }
       
-    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
-    
-    # get summary variables
-    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
-    } else{
-      dataSummary <- NULL
-    }
-    
-    if(!is.null(control)){
-      if(control$step == 'derive'){
-        
-        ParallelLogger::logInfo(paste0('At step ', control$step))
-        pda::pda(
-          ipdata = ipdata, 
-          hosdata = dataSummary,
-          site_id = siteId, 
-          dir = file.path(outputFolder, wave)
-        )
-        
-        ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
-        ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
-        
-      } # control exists
-    } else{
-      ParallelLogger::logInfo('Control is not for derive - please check control stage')
-    }
-    
-  } # end wave
+    } # end wave
     
   }
   
@@ -436,45 +460,53 @@ execute <- function(
         {readChar(jsonFileLocation[[wave]], file.info(jsonFileLocation[[wave]])$size)},
         error= function(cond) {
           ParallelLogger::logInfo('Issue with loading json file...');
-          ParallelLogger::logError(cond)
+          ParallelLogger::logError(cond);
+          return(NULL)
         })
-      control <- jsonlite::fromJSON(control)
       
-      # check control name 
-      if(length(grep(wave, control$project_name))==0){
-        ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+      if(!is.null(control)){
+        
+        control <- jsonlite::fromJSON(control)
+        
+        # check control name 
+        if(length(grep(wave, control$project_name))==0){
+          ParallelLogger::logWarn('Control project_name suggests incorrect wave')
+        }
+        
+        ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
+        
+        # get summary variables
+        if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
+          dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
+        } else{
+          dataSummary <- NULL
+        }
+        
+        if(!is.null(control)){
+          if(control$step == 'estimate'){
+            
+            ParallelLogger::logInfo(paste0('At step ', control$step))
+            pda::pda(
+              ipdata = ipdata, 
+              hosdata = dataSummary,
+              site_id = siteId, 
+              dir = file.path(outputFolder, wave)
+            )
+            
+            ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
+            ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
+            
+          } # control exists
+        } else{
+          ParallelLogger::logInfo('Control is not for estimate - please check control stage')
+        }
+        
+      } else {
+        ParallelLogger::logInfo(paste0('No control for wave ', wave))
       }
+      
+    } # end wave
     
-    ipdata <- utils::read.csv(file.path(outputFolder, wave, 'data.csv'))
-    
-    # get summary variables
-    if(file.exists(file.path(outputFolder, wave, 'dataSummary.csv'))){
-      dataSummary <- utils::read.csv(file.path(outputFolder, wave, 'dataSummary.csv'))
-    } else{
-      dataSummary <- NULL
-    }
-    
-    if(!is.null(control)){
-      if(control$step == 'estimate'){
-        
-        ParallelLogger::logInfo(paste0('At step ', control$step))
-        pda::pda(
-          ipdata = ipdata, 
-          hosdata = dataSummary,
-          site_id = siteId, 
-          dir = file.path(outputFolder, wave)
-        )
-        
-        ParallelLogger::logInfo(paste0('result json ready to check in ', file.path(outputFolder, wave)))
-        ParallelLogger::logInfo(paste0('If you are happy to share, please upload this to ', website))
-        
-      } # control exists
-    } else{
-      ParallelLogger::logInfo('Control is not for estimate - please check control stage')
-    }
-    
-  } # end wave
-  
   }
   
   if(runSynthesize){

@@ -100,8 +100,9 @@ generateDatePlot <- function(
   res <- DatabaseConnector::querySql(conn, sql)
 
   plotDate <- ggplot2::ggplot(
-    data = res %>% dplyr::group_by(.data$COHORT_START_DATE) %>% dplyr::summarise(N = n()), 
-    ggplot2::aes(x = COHORT_START_DATE, y = N, group = 1)) +
+    data = res %>% dplyr::group_by(.data$COHORT_START_DATE) %>% dplyr::summarise(N = dplyr::n()), 
+    ggplot2::aes(x = COHORT_START_DATE, y = N, group = 1)
+    ) +
     ggplot2::geom_line()+
     ggplot2::geom_point() +
     ggplot2::theme(strip.text.y.right = ggplot2::element_text(angle = 0))

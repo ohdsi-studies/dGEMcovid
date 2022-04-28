@@ -22,4 +22,6 @@
 #'
 #' @docType package
 #' @name dGEMcovid
+#' @importFrom dplyr %>%
+#' @importFrom rlang .data
 NULL

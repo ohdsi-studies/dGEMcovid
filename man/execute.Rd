@@ -7,8 +7,6 @@
 execute(
   databaseDetails,
   siteId = "site_name",
-  uri,
-  secret,
   outputFolder,
   createCohorts = F,
   createData = F,
@@ -16,10 +14,15 @@ execute(
   createControl = F,
   siteIds = "",
   leadSiteNextStep = F,
-  runAnalysis = F,
+  runInitialize = F,
+  runDerive = F,
+  runEstimate = F,
   runSynthesize = F,
   verbosity = "INFO",
-  cdmVersion = 5
+  alphaStart = "20201101",
+  alphaEnd = "20210201",
+  deltaStart = "20210701",
+  deltaEnd = "20211001"
 )
 }
 \arguments{
@@ -27,11 +30,7 @@ execute(
 
 \item{siteId}{The name of your site (can be the university name, site with a number, etc.) tnis needs to be shared with the study administrator}
 
-\item{uri}{The Universal Resource Identifier for the cloud}
-
-\item{secret}{The password to authenticate as siteId on uri}
-
-\item{outputFolder}{Name of local folder to place results; make sure to use forward slashes
+\item{outputFolder}{Name of local folder to place results - make sure control is in here; make sure to use forward slashes
 (/). Do not use a folder on a network drive since this greatly impacts
 performance.}
 
@@ -45,26 +44,28 @@ performance.}
 
 \item{siteIds}{(for the lead site only) vector with the names of all the sites contributing to the study. Required when createControl = TRUE}
 
-\item{leadSiteNextStep}{(for the lead site only) Run this when you are ready to move to the next step}
+\item{runInitialize}{Runs the initialization step - this require downloading the json control from https://pda-ota.pdamethods.org/}
 
-\item{runAnalysis}{Runs the initialization, derive and estimate.  This needs to be run multiple times - the study administrator will inform you when you run.  This step 
-involves downloading the latest control json (with model specifications), fitting the model locally and then uploading the model (coefficients and ?) to 
-the cloud for the study administrator to combine.  Please note: no patient level data are transferred.}
+\item{runDerive}{Runs the derive step - this require downloading the updated json control from https://pda-ota.pdamethods.org/}
+
+\item{runEstimate}{Runs the estimate step - this require downloading the updated json control from https://pda-ota.pdamethods.org/}
 
 \item{runSynthesize}{Once the site estimates are returned, it is now possible to apply each model to the data to calculate
-predictions.}
+predictions.  This step requires downloading the updated json control from https://pda-ota.pdamethods.org/}
 
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
-\itemize{
-\item{DEBUG}{Highest verbosity showing all debug statements}
-\item{TRACE}{Showing information about start and end of steps}
-\item{INFO}{Show informative information (Default)}
-\item{WARN}{Show warning messages}
-\item{ERROR}{Show error messages}
-\item{FATAL}{Be silent except for fatal errors}
-}}
-
-\item{cdmVersion}{The version of the common data model}
+                                       \itemize{
+                                       \item{DEBUG}{Highest verbosity showing all debug statements}
+                                       \item{TRACE}{Showing information about start and end of steps}
+                                       \item{INFO}{Show informative information (Default)}
+                                       \item{WARN}{Show warning messages}
+                                       \item{ERROR}{Show error messages}
+                                       \item{FATAL}{Be silent except for fatal errors}
+                                       }  
+@param alphaStart     The start date for the alpha wave in the data in "yyyymmdd" format    
+@param alphaEnd     The end date for the alpha wave in the data in "yyyymmdd" format  
+@param deltaStart     The start date for the delta wave in the data in "yyyymmdd" format  
+@param deltaEnd     The end date for the detla wave in the data in "yyyymmdd" format}
 }
 \description{
 Execute the Study
@@ -81,8 +82,6 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
 
 execute(databaseDetails,
         siteId = 'site_1',
-        uri = 'get from administrator',
-        secret = 'hidden',
         outputFolder = "c:/temp/study_results", 
         createCohorts = T,
         createData = T,
@@ -92,8 +91,8 @@ execute(databaseDetails,
         leadSiteNextStep = F,
         runAnalysis = F,
         runSynthesize = F,
-        verbosity = "INFO",
-        cdmVersion = 5)
+        verbosity = "INFO"
+        )
 }
 
 }

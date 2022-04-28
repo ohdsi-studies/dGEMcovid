@@ -1627,7 +1627,7 @@
         "DemographicsGender": true,
         "includedCovariateIds": [],
         "addDescendantsToInclude": false,
-        "DemographicsRace": true,
+        "DemographicsRace": false,
         "mediumTermStartDays": -180,
         "excludedCovariateConceptIds": [],
         "CharlsonIndex": true,
@@ -1692,7 +1692,7 @@
       },
       {
         "cohortId": 5864,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Cancer",
         "cohortDatabaseSchema": "",
@@ -1722,7 +1722,7 @@
       },
       {
         "cohortId": 5865,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Diabetes",
         "cohortDatabaseSchema": "",
@@ -1752,7 +1752,7 @@
       },
       {
         "cohortId": 5866,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Heart disease",
         "cohortDatabaseSchema": "",
@@ -1782,7 +1782,7 @@
       },
       {
         "cohortId": 5867,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Hyperlipidemia",
         "cohortDatabaseSchema": "",
@@ -1812,7 +1812,7 @@
       },
       {
         "cohortId": 5868,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Hypertension",
         "cohortDatabaseSchema": "",
@@ -1842,7 +1842,7 @@
       },
       {
         "cohortId": 5869,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Kidney disease",
         "cohortDatabaseSchema": "",
@@ -1872,7 +1872,7 @@
       },
       {
         "cohortId": 5870,
-        "startDay": -36135,
+        "startDay": -36500,
         "lnAgeInteraction": false,
         "covariateName": "Obesity",
         "cohortDatabaseSchema": "",

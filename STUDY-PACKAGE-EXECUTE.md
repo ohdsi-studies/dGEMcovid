@@ -220,32 +220,4 @@ execute(
 ```
 
 ## Step 5 - Synthesize
-- If you have an email from the study lead telling you to progress to the estimate step, please log into https://pda-ota.pdamethods.org/ and download the new control.jsons into `outputFolder/alpha` and `outputFolder/delta`.
-
-- You can now run the following code to create the `<siteId>_estimate.json` in the `outputFolder/alpha` and `outputFolder/delta` folders.
-
-- You now need to inspect each `<siteId>_estimate.json` and if happy log into https://pda-ota.pdamethods.org/  and upload the files.
-
-- You now need to inspect the object and if happy log into https://pda-ota.pdamethods.org/  and upload the file.
-
-
-```r
-library(dGEMcovid)
-# USER INPUTS
-#=======================
-
-siteId <- 'an id given to you by the study lead'
-
-# The folder where the study intermediate and result files will be written:
-outputFolder <- "your dirctory to save results" # e.g., "C:/dGEMcovidResults"
-
-
-#=======================
-
-execute(
-  siteId = siteId,
-  outputFolder = outputFolder,
-  runSynthesize = T,
-  verbosity = "INFO"
-        )
-```
+- Your part is now done.  Sit back and wait for the study lead to send you the results.
