@@ -76,7 +76,7 @@ execute(
         )
 ```
 
-Open the `countPerDate.pdf` file to view the covid trajectory for your dataset.  Determine when the alpha wave started (ddmmyyyy) and ended (ddmmyyyy) and when the delta wave started (ddmmyyyy) and ended (ddmmyyyy).
+Open the `countPerDate.pdf` file to view the covid trajectory for your dataset.  Determine when the alpha wave started (yyyymmdd) and ended (yyyymmdd) and when the delta wave started (yyyymmdd) and ended (yyyymmdd).
 
 Now run the following code to extract summary data for each wave:
 
@@ -87,10 +87,10 @@ execute(
   outputFolder = outputFolder,
   createData = T,
   verbosity = "INFO",
-  alphaStart = '01112020',
-  alphaEnd = '01022021',
-  deltaStart = '01082021',
-  deltaEnd = '01102021'
+  alphaStart = '20201101',
+  alphaEnd = '20210201',
+  deltaStart = '20210801',
+  deltaEnd = '20211001'
         )
 ```
 
@@ -161,9 +161,9 @@ execute(
 
 
 ## Step 4 - Derive
-- If you have an email from the study lead telling you to progress to the estimate step, please log into https://pda-ota.pdamethods.org/ and download the new control.jsons into `outputFolder/alpha` and `outputFolder/delta`.
+- If you have an email from the study lead telling you to progress to the derive step, please log into https://pda-ota.pdamethods.org/ and download the new control.jsons into `outputFolder/alpha` and `outputFolder/delta`.
 
-- You can now run the following code to create the `<siteId>_estimate.json` in the `outputFolder/alpha` and `outputFolder/delta` folders.
+- You can now run the following code to create the `<siteId>_derive.json` in the `outputFolder/alpha` and `outputFolder/delta` folders.
 
 - You now need to inspect each `<siteId>_estimate.json` and if happy log into https://pda-ota.pdamethods.org/  and upload the files.
 
@@ -219,5 +219,5 @@ execute(
         )
 ```
 
-## Step 5 - Synthesize
+## Step 6 - Synthesize
 - Your part is now done.  Sit back and wait for the study lead to send you the results.
