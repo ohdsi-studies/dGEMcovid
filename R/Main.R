@@ -207,8 +207,10 @@ execute <- function(
       if('Charlson_index___Romano_adaptation' %in% colnames(ipdata)){
         ParallelLogger::logInfo('Processing Charlson index into categories')
         # Charlson comorbidity categories: 0-1, 2-4, and 5
-        ipdata$Charlson_index___Romano_adaptation0_1 <- rep(0, nrow(ipdata))
-        ipdata$Charlson_index___Romano_adaptation0_1[ipdata$Charlson_index___Romano_adaptation <= 1] <- 1
+        
+        # make 0-1 the reference
+        ##ipdata$Charlson_index___Romano_adaptation0_1 <- rep(0, nrow(ipdata))
+        ##ipdata$Charlson_index___Romano_adaptation0_1[ipdata$Charlson_index___Romano_adaptation <= 1] <- 1
         
         ipdata$Charlson_index___Romano_adaptation2_4 <- rep(0, nrow(ipdata))
         ipdata$Charlson_index___Romano_adaptation2_4[ipdata$Charlson_index___Romano_adaptation <= 4 & ipdata$Charlson_index___Romano_adaptation >=2] <- 1
@@ -223,8 +225,9 @@ execute <- function(
       if('age_in_years' %in% colnames(ipdata)){
         ParallelLogger::logInfo('Processing age into categories')
         
-        ipdata$age18_64 <- rep(0, nrow(ipdata))
-        ipdata$age18_64[ipdata$age_in_years >= 0 & ipdata$age_in_years <= 64] <- 1
+        # make 18-64 the reference
+        ##ipdata$age18_64 <- rep(0, nrow(ipdata))
+        ##ipdata$age18_64[ipdata$age_in_years >= 0 & ipdata$age_in_years <= 64] <- 1
         
         ipdata$age65_80 <- rep(0, nrow(ipdata))
         ipdata$age65_80[ipdata$age_in_years >= 65 & ipdata$age_in_years <= 79] <- 1
@@ -234,6 +237,9 @@ execute <- function(
         
         ipdata <- ipdata[,colnames(ipdata) != 'age_in_years']
       }
+      
+      # make the female gender the reference
+      ipdata <- ipdata[,colnames(ipdata) != 'gender___FEMALE']
       
       # save the data:
       utils::write.csv(
