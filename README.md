@@ -1,14 +1,14 @@
 dGEM (Decentralized Algorithm for Generalized Linear Mixed Model)
 =============
 
-<img src="https://img.shields.io/badge/Study%20Status-Repo%20Created-lightgray.svg" alt="Study Status: Repo Created">
+<img src="https://img.shields.io/badge/Study%20Status-Design%20Finalized-brightgreen.svg" alt="Study Status: Design Finalized">
 
 - Analytics use case(s): **Patient-Level Prediction**
 - Study type: **Clinical Application**
 - Tags: **COVID-19**
 - Study lead: **Jiayi Tong**, **Yong Chen**, **Jenna Reps**
 - Study lead forums tag: **[add_username](https://forums.ohdsi.org/u/add_username)**
-- Study start date: **month year**
+- Study start date: **April 2022**
 - Study end date: **month year**
 - Protocol: **[Here](https://github.com/ohdsi-studies/dGEMcovid/blob/master/extras/dGEM_Decentralized_Algorithm_for_Generalized_Linear_Mixed_Model_v0.3.docx)**
 - Publications: **-**
