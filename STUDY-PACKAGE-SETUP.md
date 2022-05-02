@@ -44,16 +44,17 @@ dir.create(projectFolder,   recursive = T)
 setwd(projectFolder)
                                                                                               
 # Download the lock file:
-download.file("https://raw.githubusercontent.com/ohdsi-studies/dGEMcovid/main/renv.lock", "renv.lock")
+download.file("https://raw.githubusercontent.com/ohdsi-studies/dGEMcovid/master/renv.lock", "renv.lock")
 
 # Build the local library into projectFolder (takes a while):
 renv::init()
 
 # (When not in RStudio, you'll need to restart R now)
 
-# finally install the dGEMcovid package
-install.packages('devtools')
-devtools::install_github('ohdsi-studies/dGEMcovid')
+# finally install the latest pda and install dGEMcovid package
+install.packages('remotes')
+remotes::install_github('Penncil/pda')
+remotes::install_github('ohdsi-studies/dGEMcovid')
 
 library(dGEMcovid)
 ````                                                                                                 
