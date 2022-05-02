@@ -777,12 +777,6 @@
 			"Source" : "Repository",
 			"Repository" : "CRAN"
 		},
-		"CohortGenerator" : {
-			"Package" : "CohortGenerator",
-			"Version" : "0.3.0",
-			"Source" : "Repository",
-			"Repository" : "CRAN"
-		},
 		"pda" : {
 			"Package" : "pda",
 			"Version" : "1.0-2",
@@ -824,6 +818,16 @@
 			"RemoteRepo" : "CirceR",
 			"RemoteUsername" : "ohdsi",
 			"RemoteRef" : "v1.1.1"
+		},
+		"CohortGenerator" : {
+			"Package" : "CohortGenerator",
+			"Version" : "0.3.0",
+			"Source" : "GitHub",
+			"RemoteType" : "github",
+			"RemoteHost" : "api.github.com",
+			"RemoteRepo" : "CohortGenerator",
+			"RemoteUsername" : "ohdsi",
+			"RemoteRef" : "v0.3.0"
 		}
 	}
 }
