@@ -15,7 +15,7 @@ Imports:
     PatientLevelPrediction (>= 5.0.2),
     ParallelLogger,
     pda,
-    rlang,
+    rlang (>= 1.0.2),
     SqlRender,
     utils
 Suggests:
