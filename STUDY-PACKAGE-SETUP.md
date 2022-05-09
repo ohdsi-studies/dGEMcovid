@@ -3,7 +3,18 @@ Installing the study package using renv
   
 The following steps will detail how to set up the package using [renv](https://rstudio.github.io/renv/articles/renv.html).
 
-# Package Installation
+# Dependencies
+
+See [instructions here for R and Java installation](https://www.ohdsi.org/web/wiki/doku.php?id=documentation:r_setup)
+
+## Java
+The OHDSI tools require the use of Java to connect to the OMOP CDM database.  Therefore you need to ensure you have JAVA set up and configured. On a 64-bit machine it is better to install the JDK rather than the JRE, since the JRE only seems to include the 32-bit version. If you have further trouble, be sure on Windows that your Path variable includes the path to jvm.dll (Windows Button –> type “path” –> Edit Environmental Variables –> Edit PATH variable, add to end `;C:/Program Files/Java/jre/bin/server`) or wherever it is on your system.  
+
+## R
+You also need to have R installed. Download R for [Windows](https://cran.r-project.org/bin/windows/base/) or [Mac](https://mirror.las.iastate.edu/CRAN/).
+
+
+# Study Package Installation
 
 This section will detail the process for installing the package along with all of the R package dependencies using [renv](https://rstudio.github.io/renv/articles/renv.html). In short, we are using renv to encapsulate the R dependencies for this project in a way that will not disturb your other R depdencies.
 
