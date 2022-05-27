@@ -1,7 +1,7 @@
 Package: dGEMcovid
 Type: Package
 Title: A Skeleton for running distributed model studies
-Version: 0.0.1
+Version: 0.0.2
 Author: Jenna Reps [aut, cre]
 Maintainer: Jenna M Reps <reps@ohdsi.org>
 Description: A skeleton package to be used as a starting point when implementing distributed model studies.
