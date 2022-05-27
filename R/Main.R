@@ -26,6 +26,7 @@
 #'                             performance.
 #' @param createCohorts        Create the cohortTable table with the target population and outcome cohorts?
 #' @param createData           Create the labelled data set (this is required before runAnalysis)
+#' @param createPlot           Plot the number of covid hospitalizations by month 
 #' @param sampleSize           The number of patients in the target cohort to sample (if NULL uses all patients)
 #' @param createControl        (for the lead site only) Run this code to create the study control
 #' @param siteIds              (for the lead site only) vector with the names of all the sites contributing to the study. Required when createControl = TRUE
@@ -77,6 +78,7 @@ execute <- function(
   outputFolder,
   createCohorts = F,
   createData = F,
+  createPlot = createData,
   sampleSize = NULL,
   createControl = F,
   siteIds = '', # only needed if lead site
@@ -131,13 +133,15 @@ execute <- function(
       databaseDetails = databaseDetails,
       outputFolder = outputFolder
     )
-    
+  } 
+  
+  if(createPlot){
     ParallelLogger::logInfo('Generating date plot')
     generateDatePlot(
       databaseDetails = databaseDetails,
       outputFolder = outputFolder
-      )
-  } 
+    )
+  }
   
   if(createData){
     

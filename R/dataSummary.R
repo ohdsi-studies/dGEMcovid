@@ -98,6 +98,12 @@ generateDatePlot <- function(
   )
   
   res <- DatabaseConnector::querySql(conn, sql)
+  
+  # saving as csv
+  utils::write.csv(
+    x = res %>% dplyr::group_by(.data$COHORT_START_DATE) %>% dplyr::summarise(N = dplyr::n()), 
+    file = file.path(outputFolder, "countPerDate.csv")
+    )
 
   plotDate <- ggplot2::ggplot(
     data = res %>% dplyr::group_by(.data$COHORT_START_DATE) %>% dplyr::summarise(N = dplyr::n()), 
@@ -105,8 +111,11 @@ generateDatePlot <- function(
     ) +
     ggplot2::geom_line()+
     ggplot2::geom_point() +
-    ggplot2::theme(strip.text.y.right = ggplot2::element_text(angle = 0))
-
+    ggplot2::scale_x_date(date_breaks="1 month", date_labels="%B-%Y") +
+    ggplot2::theme(
+      strip.text.y.right = ggplot2::element_text(angle = 0),
+      axis.text.x = ggplot2::element_text(angle = 90)
+      )
   
   ggplot2::ggsave(file.path(outputFolder, "countPerDate.pdf"))
   

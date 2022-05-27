@@ -10,6 +10,7 @@ execute(
   outputFolder,
   createCohorts = F,
   createData = F,
+  createPlot = createData,
   sampleSize = NULL,
   createControl = F,
   siteIds = "",
@@ -37,6 +38,8 @@ performance.}
 \item{createCohorts}{Create the cohortTable table with the target population and outcome cohorts?}
 
 \item{createData}{Create the labelled data set (this is required before runAnalysis)}
+
+\item{createPlot}{Plot the number of covid hospitalizations by month}
 
 \item{sampleSize}{The number of patients in the target cohort to sample (if NULL uses all patients)}
 
