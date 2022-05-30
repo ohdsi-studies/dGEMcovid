@@ -8,7 +8,6 @@ Description: A skeleton package to be used as a starting point when implementing
 Depends:
     R(>= 3.6.0)
 Imports:
-    CohortGenerator,
     DatabaseConnector,
     dplyr,
     jsonlite,
@@ -24,8 +23,7 @@ Suggests:
     rmarkdown,
     R.utils
 Remotes:
-    ohdsi/PatientLevelPrediction,
-    ohdsi/CohortGenerator
+    ohdsi/PatientLevelPrediction
 License: Apache License 2.0
 VignetteBuilder: knitr
 LazyData: TRUE

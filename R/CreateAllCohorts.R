@@ -18,55 +18,97 @@ createCohorts <- function(
   databaseDetails,
   outputFolder
 ) {
-  if (!file.exists(outputFolder))
+  if (!file.exists(outputFolder)){
     dir.create(outputFolder)
+  }
   
-  connection <- DatabaseConnector::connect(databaseDetails$connectionDetails)
-  on.exit(DatabaseConnector::disconnect(connection))
+  conn <- DatabaseConnector::connect(databaseDetails$connectionDetails)
+  on.exit(DatabaseConnector::disconnect(conn))
   
-  CohortGenerator::createCohortTables(connection = connection,
-                                      cohortDatabaseSchema = databaseDetails$cohortDatabaseSchema,
-                                      cohortTableNames = CohortGenerator::getCohortTableNames(
-                                        cohortTable = databaseDetails$cohortTable
-                                      )
+  .createCohorts(
+    connection = conn,
+    cdmDatabaseSchema = databaseDetails$cdmDatabaseSchema,
+    cohortDatabaseSchema = databaseDetails$cohortDatabaseSchema,
+    cohortTable = databaseDetails$cohortTable,
+    oracleTempSchema = databaseDetails$tempEmulationSchema,
+    outputFolder = outputFolder
   )
-  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(packageName = "dGEMcovid",
-                                                                 settingsFileName = "Cohorts.csv",
-                                                                 cohortFileNameValue = "cohortId")
-  CohortGenerator::generateCohortSet(connection = connection,
-                                     cohortDatabaseSchema = databaseDetails$cohortDatabaseSchema,
-                                     #cohortTableNames = databaseDetails$cohortTable,
-                                     cohortTableNames = CohortGenerator::getCohortTableNames(
-                                       cohortTable = databaseDetails$cohortTable
-                                     ),
-                                     cdmDatabaseSchema = databaseDetails$cdmDatabaseSchema,
-                                     tempEmulationSchema = databaseDetails$tempEmulationSchema,
-                                     cohortDefinitionSet = cohortDefinitionSet)
   
-
   # Check number of subjects per cohort:
-  message("Counting cohorts")
-  counts <- CohortGenerator::getCohortCounts(connection = connection,
-                                             cohortDatabaseSchema = databaseDetails$cohortDatabaseSchema,
-                                             cohortTable = databaseDetails$cohortTable)
-  
+  ParallelLogger::logInfo("Counting cohorts")
+  sql <- SqlRender::loadRenderTranslateSql(
+    "GetCounts.sql",
+    "dGEMcovid",
+    dbms = databaseDetails$connectionDetails$dbms,
+    oracleTempSchema = databaseDetails$tempEmulationSchema,
+    cdm_database_schema = databaseDetails$cdmDatabaseSchema,
+    work_database_schema = databaseDetails$cohortDatabaseSchema,
+    study_cohort_table = databaseDetails$cohortTable
+  )
+  counts <- DatabaseConnector::querySql(conn, sql)
+  colnames(counts) <- SqlRender::snakeCaseToCamelCase(colnames(counts))
   counts <- addCohortNames(counts)
   utils::write.csv(counts, file.path(outputFolder, "CohortCounts.csv"), row.names = FALSE)
 }
 
-addCohortNames <- function(data, IdColumnName = "cohortId", nameColumnName = "cohortName") {
+addCohortNames <- function(data) {
   pathToCsv <- system.file("Cohorts.csv", package = "dGEMcovid")
 
   idToName <- utils::read.csv(pathToCsv)
   idToName <- idToName[order(idToName$cohortId), ]
   idToName <- idToName[!duplicated(idToName$cohortId), ]
-  names(idToName)[1] <- IdColumnName
-  names(idToName)[2] <- nameColumnName
-  data <- merge(data, idToName, all.x = TRUE)
-  # Change order of columns:
-  idCol <- which(colnames(data) == IdColumnName)
-  if (idCol < ncol(data) - 1) {
-    data <- data[, c(1:idCol, ncol(data) , (idCol + 1):(ncol(data) - 1))]
-  }
+  data <- merge(idToName,data, all.x = TRUE)
+
   return(data)
 }
+
+
+
+
+
+
+
+.createCohorts <- function(
+  connection,
+  cdmDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
+  cohortDatabaseSchema,
+  cohortTable,
+  oracleTempSchema,
+  outputFolder
+) {
+  
+  # Create study cohort table structure:
+  sql <- SqlRender::loadRenderTranslateSql(
+    sqlFilename = "CreateCohortTable.sql",
+    packageName = "dGEMcovid",
+    dbms = attr(connection, "dbms"),
+    oracleTempSchema = oracleTempSchema,
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_table = cohortTable
+  )
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
+  
+  # Instantiate cohorts:
+  pathToCsv <- system.file("Cohorts.csv", package = "dGEMcovid")
+  cohortsToCreate <- utils::read.csv(pathToCsv)
+  for (i in 1:nrow(cohortsToCreate)) {
+    writeLines(paste("Creating cohort:", cohortsToCreate$cohortName[i]))
+    sql <- SqlRender::loadRenderTranslateSql(
+      sqlFilename = paste0(cohortsToCreate$cohortId[i], ".sql"),
+      packageName = "dGEMcovid",
+      dbms = attr(connection, "dbms"),
+      oracleTempSchema = oracleTempSchema,
+      cdm_database_schema = cdmDatabaseSchema,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      
+      target_database_schema = cohortDatabaseSchema,
+      target_cohort_table = cohortTable,
+      target_cohort_id = cohortsToCreate$cohortId[i]
+    )
+    DatabaseConnector::executeSql(connection, sql)
+  }
+  
+}
+

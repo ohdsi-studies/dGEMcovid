@@ -818,16 +818,6 @@
 			"RemoteRepo" : "CirceR",
 			"RemoteUsername" : "ohdsi",
 			"RemoteRef" : "v1.1.1"
-		},
-		"CohortGenerator" : {
-			"Package" : "CohortGenerator",
-			"Version" : "0.3.0",
-			"Source" : "GitHub",
-			"RemoteType" : "github",
-			"RemoteHost" : "api.github.com",
-			"RemoteRepo" : "CohortGenerator",
-			"RemoteUsername" : "ohdsi",
-			"RemoteRef" : "v0.3.0"
 		}
 	}
 }
