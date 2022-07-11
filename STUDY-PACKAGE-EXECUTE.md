@@ -165,7 +165,7 @@ execute(
 
 - You can now run the following code to create the `<siteId>_derive.json` in the `outputFolder/alpha` and `outputFolder/delta` folders.
 
-- You now need to inspect each `<siteId>_estimate.json` and if happy log into https://pda-ota.pdamethods.org/  and upload the files.
+- You now need to inspect each `<siteId>_derive.json` and if happy log into https://pda-ota.pdamethods.org/  and upload the files.
 
 - after submitting the file, please wait for an email from the study lead before moving to step 5
 
