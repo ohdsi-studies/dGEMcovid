@@ -1,4 +1,4 @@
-dGEM (Decentralized Algorithm for Generalized Linear Mixed Model)
+dGEM (Decentralized Algorithm for Generalized Linear Mixed Effects Model)
 =============
 
 <img src="https://img.shields.io/badge/Study%20Status-Design%20Finalized-brightgreen.svg" alt="Study Status: Design Finalized">
